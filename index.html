@@ -3,118 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CaseMint Clone</title>
+    <title>StarLuck CaseMint</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Стиль у темних тонах як на скріншоті */
         body {
-            background-color: #0f1218;
+            background-color: #0b0e14;
             color: white;
-            font-family: sans-serif;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin: 0;
-            overflow-x: hidden;
         }
-        .container { width: 90%; text-align: center; margin-top: 50px; }
+        .header { width: 100%; display: flex; justify-content: space-between; margin-bottom: 30px; }
+        .balance { background: #1c212a; padding: 10px 20px; border-radius: 20px; font-weight: bold; border: 1px solid #30363d; }
         
-        /* Рулетка (Кейс) */
-        .roulette-wrapper {
-            position: relative;
-            width: 300px;
-            height: 100px;
-            border: 2px solid #30363d;
-            border-radius: 12px;
-            margin: 20px auto;
-            overflow: hidden; /* Ховаємо зайві предмети */
-            background: #161b22;
+        /* Кейси */
+        .cases-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
+        .case-card {
+            background: linear-gradient(180deg, #1c212a 0%, #11151c 100%);
+            border: 1px solid #30363d;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            transition: 0.3s;
         }
-        .line {
-            position: absolute;
-            left: 50%;
-            width: 2px;
-            height: 100%;
-            background: #ff4500;
-            z-index: 10;
-        }
-        .items-list {
-            display: flex;
-            position: absolute;
-            left: 0;
-            transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); /* Плавне гальмування */
-        }
-        .item {
-            min-width: 80px;
-            height: 80px;
-            margin: 10px;
-            background: #21262d;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-        }
-        
-        button {
-            background: linear-gradient(90deg, #4caf50, #8bc34a);
-            border: none;
-            padding: 15px 30px;
-            color: white;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
+        .case-card img { width: 100%; border-radius: 10px; margin-bottom: 10px; }
+        .case-name { font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
+        .case-price { color: #4caf50; font-size: 0.9em; }
+
+        /* Таби (Меню знизу) */
+        .navbar {
+            position: fixed;
+            bottom: 0;
             width: 100%;
-            font-size: 16px;
+            background: #161b22;
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            border-top: 1px solid #30363d;
         }
+        .nav-item { color: #8b949e; font-size: 12px; text-decoration: none; text-align: center; }
+        .nav-item.active { color: #58a6ff; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2 style="color: #8b949e;">DAILY</h2>
-        
-        <div class="roulette-wrapper">
-            <div class="line"></div>
-            <div id="itemsList" class="items-list">
-                </div>
-        </div>
+    <div class="header">
+        <div class="balance">💰 0.2</div>
+        <div style="color: #8b949e;">ID: Stormqw</div>
+    </div>
 
-        <button onclick="spin()">ВІДКРИТИ БЕЗКОШТОВНО</button>
-        <p id="status"></p>
+    <h3 style="align-self: flex-start; color: #8b949e;">ПРОМО</h3>
+    <div class="cases-grid">
+        <div class="case-card" onclick="openCase('DAILY')">
+            <img src="https://img.freepik.com/free-vector/red-loot-box-with-gold-coins_107791-4514.jpg" alt="Daily">
+            <div class="case-name">DAILY</div>
+            <div class="case-price">БЕЗКОШТОВНО</div>
+        </div>
+        <div class="case-card" onclick="openCase('PROMO')">
+            <img src="https://img.freepik.com/free-vector/mystery-box-concept-illustration_114360-10065.jpg" alt="Promo">
+            <div class="case-name">PROMO</div>
+            <div class="case-price">БЕЗКОШТОВНО</div>
+        </div>
+    </div>
+
+    <div id="inventory" style="display: none; margin-top: 20px; width: 100%;">
+        <h3>МІЙ ІНВЕНТАР</h3>
+        <div id="inventory-list" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+    </div>
+
+    <div class="navbar">
+        <div class="nav-item active" onclick="showTab('cases')">📦 Кейси</div>
+        <div class="nav-item" onclick="showTab('inventory')">🎒 Інвентар</div>
+        <div class="nav-item">💎 Бонуси</div>
+        <div class="nav-item">👤 Профіль</div>
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.expand(); // Розгорнути додаток на весь екран
+        let inventory = [];
 
-        const itemsList = document.getElementById('itemsList');
-        const items = ['💰', '💎', '🎁', '🔥', '⭐️', '👑', '🍀']; // Набір призів
-        
-        // Створюємо довгу стрічку предметів для ефекту прокрутки
-        function initItems() {
-            itemsList.innerHTML = '';
-            for(let i=0; i < 50; i++) {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'item';
-                itemDiv.innerText = items[Math.floor(Math.random() * items.length)];
-                itemsList.appendChild(itemDiv);
-            }
+        function openCase(type) {
+            alert("Відкриваємо кейс " + type + "...");
+            const prizes = ['💎 Алмаз', '🔥 Скін', '💰 10 монет'];
+            const win = prizes[Math.floor(Math.random() * prizes.length)];
+            inventory.push(win);
+            alert("Ви виграли: " + win);
+            updateInventory();
         }
-        initItems();
 
-        function spin() {
-            const itemWidth = 100; // 80px + 20px margin
-            const offset = (25 * itemWidth) + (Math.random() * itemWidth); // Випадкова зупинка
-            
-            itemsList.style.transform = `translateX(-${offset}px)`;
-            
-            document.getElementById('status').innerText = "Кейс відкривається...";
-            
-            setTimeout(() => {
-                document.getElementById('status').innerText = "Вітаємо! Ви щось виграли!";
-                // Можна надіслати результат назад боту
-                // tg.sendData("виграш_100_монет");
-            }, 4500);
+        function updateInventory() {
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = '';
+            inventory.forEach(item => {
+                const div = document.createElement('div');
+                div.style.background = '#21262d';
+                div.style.padding = '10px';
+                div.style.borderRadius = '5px';
+                div.innerText = item;
+                list.appendChild(div);
+            });
+        }
+
+        function showTab(tab) {
+            if(tab === 'inventory') {
+                document.querySelector('.cases-grid').style.display = 'none';
+                document.getElementById('inventory').style.display = 'block';
+            } else {
+                document.querySelector('.cases-grid').style.display = 'grid';
+                document.getElementById('inventory').style.display = 'none';
+            }
         }
     </script>
 </body>
