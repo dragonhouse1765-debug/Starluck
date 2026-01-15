@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CaseMint Clone</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* Стиль у темних тонах як на скріншоті */
+        body {
+            background-color: #0f1218;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        .container { width: 90%; text-align: center; margin-top: 50px; }
+        
+        /* Рулетка (Кейс) */
+        .roulette-wrapper {
+            position: relative;
+            width: 300px;
+            height: 100px;
+            border: 2px solid #30363d;
+            border-radius: 12px;
+            margin: 20px auto;
+            overflow: hidden; /* Ховаємо зайві предмети */
+            background: #161b22;
+        }
+        .line {
+            position: absolute;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background: #ff4500;
+            z-index: 10;
+        }
+        .items-list {
+            display: flex;
+            position: absolute;
+            left: 0;
+            transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); /* Плавне гальмування */
+        }
+        .item {
+            min-width: 80px;
+            height: 80px;
+            margin: 10px;
+            background: #21262d;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+        
+        button {
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            border: none;
+            padding: 15px 30px;
+            color: white;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 style="color: #8b949e;">DAILY</h2>
+        
+        <div class="roulette-wrapper">
+            <div class="line"></div>
+            <div id="itemsList" class="items-list">
+                </div>
+        </div>
+
+        <button onclick="spin()">ВІДКРИТИ БЕЗКОШТОВНО</button>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Розгорнути додаток на весь екран
+
+        const itemsList = document.getElementById('itemsList');
+        const items = ['💰', '💎', '🎁', '🔥', '⭐️', '👑', '🍀']; // Набір призів
+        
+        // Створюємо довгу стрічку предметів для ефекту прокрутки
+        function initItems() {
+            itemsList.innerHTML = '';
+            for(let i=0; i < 50; i++) {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item';
+                itemDiv.innerText = items[Math.floor(Math.random() * items.length)];
+                itemsList.appendChild(itemDiv);
+            }
+        }
+        initItems();
+
+        function spin() {
+            const itemWidth = 100; // 80px + 20px margin
+            const offset = (25 * itemWidth) + (Math.random() * itemWidth); // Випадкова зупинка
+            
+            itemsList.style.transform = `translateX(-${offset}px)`;
+            
+            document.getElementById('status').innerText = "Кейс відкривається...";
+            
+            setTimeout(() => {
+                document.getElementById('status').innerText = "Вітаємо! Ви щось виграли!";
+                // Можна надіслати результат назад боту
+                // tg.sendData("виграш_100_монет");
+            }, 4500);
+        }
+    </script>
+</body>
+</html>
