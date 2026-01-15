@@ -2,118 +2,191 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StarLuck CaseMint</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CaseMint App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            background-color: #0b0e14;
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        :root {
+            --bg-color: #1a1d23;
+            --card-bg: linear-gradient(180deg, #2c313a 0%, #1c2026 100%);
+            --accent-blue: #58a6ff;
+            --text-main: #ffffff;
+            --text-dim: #8b949e;
+            --green-price: #4caf50;
         }
-        .header { width: 100%; display: flex; justify-content: space-between; margin-bottom: 30px; }
-        .balance { background: #1c212a; padding: 10px 20px; border-radius: 20px; font-weight: bold; border: 1px solid #30363d; }
-        
-        /* Кейси */
-        .cases-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; }
-        .case-card {
-            background: linear-gradient(180deg, #1c212a 0%, #11151c 100%);
-            border: 1px solid #30363d;
-            border-radius: 15px;
-            padding: 15px;
-            text-align: center;
-            transition: 0.3s;
-        }
-        .case-card img { width: 100%; border-radius: 10px; margin-bottom: 10px; }
-        .case-name { font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
-        .case-price { color: #4caf50; font-size: 0.9em; }
 
-        /* Таби (Меню знизу) */
-        .navbar {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background: #161b22;
-            display: flex;
-            justify-content: space-around;
-            padding: 15px 0;
-            border-top: 1px solid #30363d;
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 0; overflow-x: hidden;
         }
-        .nav-item { color: #8b949e; font-size: 12px; text-decoration: none; text-align: center; }
-        .nav-item.active { color: #58a6ff; }
+
+        /* Шапка сайту */
+        .top-bar {
+            background: #24292f;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #30363d;
+        }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 40px; height: 40px; background: #58a6ff; border-radius: 50%; }
+        .balance-tag { background: #1f242b; padding: 5px 12px; border-radius: 15px; border: 1px solid #30363d; color: #f1c40f; font-weight: bold; }
+        .wallet-addr { background: #4caf50; padding: 5px 10px; border-radius: 15px; font-size: 12px; }
+
+        .container { padding: 15px; padding-bottom: 80px; }
+
+        /* Картки кейсів */
+        .section-title { color: var(--text-dim); font-size: 14px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .case-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #30363d;
+            position: relative;
+        }
+        .case-card img { width: 80%; margin-bottom: 8px; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5)); }
+        .case-name { font-weight: bold; font-size: 14px; margin-bottom: 4px; }
+        .case-type { color: var(--text-dim); font-size: 11px; margin-bottom: 6px; }
+        .case-status { color: var(--green-price); font-size: 13px; font-weight: bold; }
+
+        /* Рулетка */
+        #roulette-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 100; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .roulette-container {
+            width: 300px; height: 100px; border: 2px solid var(--accent-blue);
+            overflow: hidden; position: relative; background: #161b22; border-radius: 10px;
+        }
+        .roulette-line { position: absolute; left: 50%; top: 0; width: 2px; height: 100%; background: red; z-index: 2; }
+        .items-tape { display: flex; position: absolute; left: 0; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); }
+        .item { min-width: 80px; height: 100px; display: flex; justify-content: center; align-items: center; font-size: 30px; border-right: 1px solid #30363d; }
+
+        /* Меню */
+        .nav {
+            position: fixed; bottom: 0; width: 100%; background: #161b22;
+            display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #30363d;
+        }
+        .nav-item { color: var(--text-dim); font-size: 11px; text-align: center; transition: 0.2s; }
+        .nav-item.active { color: var(--accent-blue); }
+        
+        #inventory-view { display: none; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="balance">💰 0.2</div>
-        <div style="color: #8b949e;">ID: Stormqw</div>
-    </div>
 
-    <h3 style="align-self: flex-start; color: #8b949e;">ПРОМО</h3>
-    <div class="cases-grid">
-        <div class="case-card" onclick="openCase('DAILY')">
-            <img src="https://img.freepik.com/free-vector/red-loot-box-with-gold-coins_107791-4514.jpg" alt="Daily">
-            <div class="case-name">DAILY</div>
-            <div class="case-price">БЕЗКОШТОВНО</div>
+    <div class="top-bar">
+        <div class="user-info">
+            <div class="avatar"></div>
+            <div>
+                <div style="font-size: 14px;">Stormqw</div>
+                <div class="balance-tag">💰 0.2</div>
+            </div>
         </div>
-        <div class="case-card" onclick="openCase('PROMO')">
-            <img src="https://img.freepik.com/free-vector/mystery-box-concept-illustration_114360-10065.jpg" alt="Promo">
-            <div class="case-name">PROMO</div>
-            <div class="case-price">БЕЗКОШТОВНО</div>
+        <div class="wallet-addr">UQCO....C-Zs</div>
+    </div>
+
+    <div class="container" id="main-view">
+        <div class="section-title">Промо</div>
+        <div class="grid">
+            <div class="case-card" onclick="startRoulette('DAILY')">
+                <img src="https://cdn-icons-png.flaticon.com/512/6584/6584942.png">
+                <div class="case-name">DAILY</div>
+                <div class="case-type">case Type</div>
+                <div class="case-status">БЕЗКОШТОВНО</div>
+            </div>
+            <div class="case-card" onclick="startRoulette('PROMO')">
+                <img src="https://cdn-icons-png.flaticon.com/512/2859/2859737.png">
+                <div class="case-name">PROMO</div>
+                <div class="case-type">case Type</div>
+                <div class="case-status">БЕЗКОШТОВНО</div>
+            </div>
         </div>
     </div>
 
-    <div id="inventory" style="display: none; margin-top: 20px; width: 100%;">
-        <h3>МІЙ ІНВЕНТАР</h3>
-        <div id="inventory-list" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+    <div class="container" id="inventory-view">
+        <div class="section-title">Мій Інвентар</div>
+        <div id="items-list" class="grid"></div>
     </div>
 
-    <div class="navbar">
-        <div class="nav-item active" onclick="showTab('cases')">📦 Кейси</div>
-        <div class="nav-item" onclick="showTab('inventory')">🎒 Інвентар</div>
-        <div class="nav-item">💎 Бонуси</div>
-        <div class="nav-item">👤 Профіль</div>
+    <div id="roulette-overlay">
+        <h2 id="result-text">Крутимо...</h2>
+        <div class="roulette-container">
+            <div class="roulette-line"></div>
+            <div id="tape" class="items-tape"></div>
+        </div>
+        <button onclick="closeRoulette()" style="margin-top:20px; padding:10px 20px; background:var(--accent-blue); border:none; color:white; border-radius:5px;">Закрити</button>
+    </div>
+
+    <div class="nav">
+        <div class="nav-item active" onclick="showTab('main')">📦<br>Кейси</div>
+        <div class="nav-item" onclick="showTab('inv')">💎<br>Інвентар</div>
+        <div class="nav-item">⚙️<br>Профіль</div>
     </div>
 
     <script>
         let inventory = [];
+        const items = ['🎁', '💎', '💰', '🔥', '👑', '⭐️', '🍀'];
 
-        function openCase(type) {
-            alert("Відкриваємо кейс " + type + "...");
-            const prizes = ['💎 Алмаз', '🔥 Скін', '💰 10 монет'];
-            const win = prizes[Math.floor(Math.random() * prizes.length)];
-            inventory.push(win);
-            alert("Ви виграли: " + win);
-            updateInventory();
+        function showTab(tab) {
+            document.getElementById('main-view').style.display = tab === 'main' ? 'block' : 'none';
+            document.getElementById('inventory-view').style.display = tab === 'inv' ? 'block' : 'none';
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            if(tab === 'inv') renderInventory();
         }
 
-        function updateInventory() {
-            const list = document.getElementById('inventory-list');
-            list.innerHTML = '';
-            inventory.forEach(item => {
+        function startRoulette(name) {
+            const overlay = document.getElementById('roulette-overlay');
+            const tape = document.getElementById('tape');
+            const resultText = document.getElementById('result-text');
+            
+            overlay.style.display = 'flex';
+            tape.style.transform = 'translateX(0)';
+            resultText.innerText = 'Крутимо ' + name + '...';
+
+            // Генеруємо стрічку елементів
+            tape.innerHTML = '';
+            for(let i=0; i<40; i++) {
+                const item = items[Math.floor(Math.random() * items.length)];
                 const div = document.createElement('div');
-                div.style.background = '#21262d';
-                div.style.padding = '10px';
-                div.style.borderRadius = '5px';
+                div.className = 'item';
                 div.innerText = item;
-                list.appendChild(div);
+                tape.appendChild(div);
+            }
+
+            // Запуск анімації
+            setTimeout(() => {
+                const winIndex = 35; 
+                const shift = winIndex * 80 - 110;
+                tape.style.transform = `translateX(-${shift}px)`;
+                
+                setTimeout(() => {
+                    const winItem = tape.children[winIndex].innerText;
+                    resultText.innerText = 'Ви виграли: ' + winItem;
+                    inventory.push(winItem);
+                }, 4100);
+            }, 100);
+        }
+
+        function closeRoulette() {
+            document.getElementById('roulette-overlay').style.display = 'none';
+        }
+
+        function renderInventory() {
+            const list = document.getElementById('items-list');
+            list.innerHTML = inventory.length ? '' : '<p>Порожньо</p>';
+            inventory.forEach(item => {
+                list.innerHTML += `<div class="case-card" style="font-size:30px;">${item}</div>`;
             });
         }
 
-        function showTab(tab) {
-            if(tab === 'inventory') {
-                document.querySelector('.cases-grid').style.display = 'none';
-                document.getElementById('inventory').style.display = 'block';
-            } else {
-                document.querySelector('.cases-grid').style.display = 'grid';
-                document.getElementById('inventory').style.display = 'none';
-            }
-        }
+        Telegram.WebApp.ready();
     </script>
 </body>
 </html>
